@@ -17,7 +17,6 @@ export default function AdminDashboard() {
     if (t === 'emoji3') return v === 'good' || v === 'excellent';
     return ['good', 'very_good', 'excellent'].includes(v);
   }).length;
-  const npsScore = totalResponses > 0 ? Math.round((goodResponses / totalResponses) * 100) : 0;
 
   const stats = [
     {
@@ -43,14 +42,6 @@ export default function AdminDashboard() {
       color: 'from-green-500 to-green-600',
       bgColor: 'bg-green-50',
       textColor: 'text-green-600'
-    },
-    {
-      title: 'NPS Score',
-      value: `${npsScore}%`,
-      icon: <TrendingUp className="w-6 h-6" />,
-      color: 'from-orange-500 to-orange-600',
-      bgColor: 'bg-orange-50',
-      textColor: 'text-orange-600'
     }
   ];
 
