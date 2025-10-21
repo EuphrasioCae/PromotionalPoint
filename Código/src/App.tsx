@@ -15,7 +15,6 @@ import AnalyticsPage from "./pages/admin/AnalyticsPage";
 import ReportsPage from "./pages/admin/ReportsPage";
 
 // User Pages
-import UserDashboard from "./pages/user/UserDashboard";
 import EvaluationsPage from "./pages/user/EvaluationsPage";
 
 function ProtectedRoute({ children, requireAdmin = false }: { children: React.ReactNode; requireAdmin?: boolean }) {
@@ -94,14 +93,7 @@ function AppRoutes() {
         />
 
         {/* User Routes */}
-        <Route
-          path="/user"
-          element={
-            <ProtectedRoute>
-              <UserDashboard />
-            </ProtectedRoute>
-          }
-        />
+        
         <Route
           path="/user/evaluations"
           element={

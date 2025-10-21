@@ -18,7 +18,6 @@ const adminNavItems: NavItem[] = [
 ];
 
 const userNavItems: NavItem[] = [
-  { to: '/user', icon: <LayoutDashboard className="w-5 h-5" />, label: 'Dashboard' },
   { to: '/user/evaluations', icon: <ClipboardList className="w-5 h-5" />, label: 'Evaluations' },
 ];
 
