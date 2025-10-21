@@ -225,36 +225,7 @@ export default function AnalyticsPage() {
           </div>
         </CardContent>
       </Card>
-
-      {/* Question Performance */}
-      <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle>Question Performance</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {questionStats.map(({ question, total, score }) => (
-              <div key={question.id} className="p-4 bg-gray-50 rounded-lg">
-                <div className="flex justify-between items-start mb-2">
-                  <div className="flex-1">
-                    <span className="text-xs font-semibold text-blue-600 bg-blue-100 px-2 py-1 rounded">
-                      {question.questionId}
-                    </span>
-                    <p className="text-sm font-medium text-gray-900 mt-2">{question.text}</p>
-                  </div>
-                  <div className="text-right ml-4">
-                    <p className="text-2xl font-bold text-gray-900">{score}%</p>
-                    <p className="text-xs text-gray-500">{total} responses</p>
-                  </div>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                  <div className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-500" style={{ width: `${score}%` }}></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      
     </div>
   );
 }
