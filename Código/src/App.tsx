@@ -48,8 +48,8 @@ function AppRoutes() {
     <DashboardLayout navigation={<Navigation isAdmin={isAdmin} />}>
       <Routes>
         {/* Redirect root based on role */}
-        <Route path="/" element={<Navigate to={isAdmin ? "/admin" : "/user"} replace />} />
-        <Route path="/login" element={<Navigate to={isAdmin ? "/admin" : "/user"} replace />} />
+        <Route path="/" element={<Navigate to={isAdmin ? "/admin" : "/user/evaluations"} replace />} />
+        <Route path="/login" element={<Navigate to={isAdmin ? "/admin" : "/user/evaluations"} replace />} />
 
         {/* Admin Routes */}
         <Route
@@ -112,7 +112,7 @@ function AppRoutes() {
         />
 
         {/* Catch all */}
-        <Route path="*" element={<Navigate to={isAdmin ? "/admin" : "/user"} replace />} />
+        <Route path="*" element={<Navigate to={isAdmin ? "/admin" : "/user/evaluations"} replace />} />
       </Routes>
     </DashboardLayout>
   );

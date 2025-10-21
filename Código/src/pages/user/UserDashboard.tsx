@@ -10,7 +10,7 @@ export default function UserDashboard() {
   const { questions, responses } = useNPS();
   const { user } = useAuth();
 
-  const activeQuestions = questions.filter(q => q.isActive);
+  const activeQuestions = questions.filter(q => q.isActive).filter(q => q.assignedTo === 'all' || q.assignedUserIds?.includes(user?.id || ''));
   const userResponses = responses.filter(r => r.userId === user?.id);
   const answeredQuestionIds = new Set(userResponses.map(r => r.questionId));
   const pendingQuestions = activeQuestions.filter(q => !answeredQuestionIds.has(q.id));
@@ -109,27 +109,41 @@ export default function UserDashboard() {
                 const question = questions.find(q => q.id === response.questionId);
                 return (
                   <div key={response.id} className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold ${
-                      response.rating === 'good' ? 'bg-green-500' :
-                      response.rating === 'regular' ? 'bg-yellow-500' : 'bg-red-500'
-                    }`}>
-                      {response.rating === 'good' ? '😊' : response.rating === 'regular' ? '😐' : '😞'}
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold ${(() => {
+                      const t: any = (response as any).rating?.type;
+                      const v: any = (response as any).rating?.value;
+                      if (t === 'numeric') return v >= 9 ? 'bg-green-500' : v >= 7 ? 'bg-yellow-500' : 'bg-red-500';
+                      if (t === 'emoji3') return v === 'good' || v === 'excellent' ? 'bg-green-500' : 'bg-red-500';
+                      return v === 'excellent' || v === 'very_good' || v === 'good' ? 'bg-green-500' : v === 'not_good' ? 'bg-yellow-500' : 'bg-red-500';
+                    })()}`}>
+                      {(() => {
+                        const t: any = (response as any).rating?.type;
+                        const v: any = (response as any).rating?.value;
+                        if (t === 'numeric') return String(v);
+                        if (t === 'emoji3') return v === 'good' || v === 'excellent' ? '😊' : '😞';
+                        return v === 'excellent' ? '🤩' : v === 'very_good' ? '😊' : v === 'good' ? '🙂' : v === 'not_good' ? '😐' : '😞';
+                      })()}
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-medium text-gray-900">{question?.text}</p>
-                      {response.comment && (
-                        <p className="text-sm text-gray-600 mt-1 italic">"{response.comment}"</p>
+                      {(response as any).comment && (
+                        <p className="text-sm text-gray-600 mt-1 italic">"{(response as any).comment}"</p>
                       )}
                       <p className="text-xs text-gray-400 mt-2">
                         {new Date(response.createdAt).toLocaleDateString()}
                       </p>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      response.rating === 'good' ? 'bg-green-100 text-green-700' :
-                      response.rating === 'regular' ? 'bg-yellow-100 text-yellow-700' :
-                      'bg-red-100 text-red-700'
-                    }`}>
-                      {response.rating}
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${(() => {
+                      const t: any = (response as any).rating?.type;
+                      const v: any = (response as any).rating?.value;
+                      if (t === 'numeric') return v >= 9 ? 'bg-green-100 text-green-700' : v >= 7 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700';
+                      if (t === 'emoji3') return v === 'good' || v === 'excellent' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
+                      return v === 'excellent' || v === 'very_good' || v === 'good' ? 'bg-green-100 text-green-700' : v === 'not_good' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700';
+                    })()}`}>
+                      {(() => {
+                        const rv: any = (response as any).rating;
+                        return rv?.type === 'numeric' ? String(rv.value) : rv?.value;
+                      })()}
                     </span>
                   </div>
                 );

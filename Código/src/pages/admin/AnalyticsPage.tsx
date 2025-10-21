@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { TrendingUp, ThumbsUp, Meh, ThumbsDown } from 'lucide-react';
+import type { Rating } from '@/types/nps';
 
 export default function AnalyticsPage() {
   const { questions, responses } = useNPS();
@@ -13,39 +14,74 @@ export default function AnalyticsPage() {
   const filteredResponses = useMemo(() => {
     return responses.filter(r => {
       const questionMatch = selectedQuestion === 'all' || r.questionId === selectedQuestion;
-      const ratingMatch = selectedRating === 'all' || r.rating === selectedRating;
+      const ratingMatch = (() => {
+        if (selectedRating === 'all') return true;
+        if (typeof (r.rating as any).value !== 'undefined') {
+          const rv = r.rating as Rating;
+          if (rv.type === 'numeric') return selectedRating === 'numeric';
+          return rv.value === selectedRating;
+        }
+        return false;
+      })();
       return questionMatch && ratingMatch;
     });
   }, [responses, selectedQuestion, selectedRating]);
 
   const stats = useMemo(() => {
     const total = filteredResponses.length;
-    const good = filteredResponses.filter(r => r.rating === 'good').length;
-    const regular = filteredResponses.filter(r => r.rating === 'regular').length;
-    const bad = filteredResponses.filter(r => r.rating === 'bad').length;
+    const emoji5 = filteredResponses.filter(r => (r.rating as any).type === 'emoji5');
+    const emoji3 = filteredResponses.filter(r => (r.rating as any).type === 'emoji3');
+    const numeric = filteredResponses.filter(r => (r.rating as any).type === 'numeric');
+
+    const countValue = (arr: typeof filteredResponses, val: string) => arr.filter(r => (r.rating as any).value === val).length;
+
+    const good = countValue(emoji3, 'good') + countValue(emoji5, 'good') + countValue(emoji5, 'very_good') + countValue(emoji5, 'excellent');
+    const regular = countValue(emoji3, 'bad') + countValue(emoji5, 'not_good');
+    const bad = countValue(emoji5, 'bad');
+
+    // For numeric, derive Net Promoter Style: 9-10 promoters as good, 7-8 neutral, 0-6 bad
+    const numValues = numeric.map(r => (r.rating as any).value as number);
+    const numGood = numValues.filter(v => v >= 9).length;
+    const numRegular = numValues.filter(v => v >= 7 && v <= 8).length;
+    const numBad = numValues.filter(v => v <= 6).length;
+
+    const totalGood = good + numGood;
+    const totalRegular = regular + numRegular;
+    const totalBad = bad + numBad;
+
+    const finalTotal = total;
 
     return {
-      total,
-      good,
-      regular,
-      bad,
-      goodPercent: total > 0 ? Math.round((good / total) * 100) : 0,
-      regularPercent: total > 0 ? Math.round((regular / total) * 100) : 0,
-      badPercent: total > 0 ? Math.round((bad / total) * 100) : 0,
-      npsScore: total > 0 ? Math.round((good / total) * 100) : 0
+      total: finalTotal,
+      good: totalGood,
+      regular: totalRegular,
+      bad: totalBad,
+      goodPercent: finalTotal > 0 ? Math.round((totalGood / finalTotal) * 100) : 0,
+      regularPercent: finalTotal > 0 ? Math.round((totalRegular / finalTotal) * 100) : 0,
+      badPercent: finalTotal > 0 ? Math.round((totalBad / finalTotal) * 100) : 0,
+      npsScore: finalTotal > 0 ? Math.round((totalGood / finalTotal) * 100) : 0
     };
   }, [filteredResponses]);
 
   const questionStats = useMemo(() => {
     return questions.map(q => {
       const qResponses = responses.filter(r => r.questionId === q.id);
-      const good = qResponses.filter(r => r.rating === 'good').length;
       const total = qResponses.length;
-      return {
-        question: q,
-        total,
-        score: total > 0 ? Math.round((good / total) * 100) : 0
-      };
+      const score = (() => {
+        if (q.scaleType === 'numeric') {
+          const values = qResponses.map(r => (r.rating as any).value as number);
+          const promoters = values.filter(v => v >= 9).length;
+          return total > 0 ? Math.round((promoters / total) * 100) : 0;
+        }
+        if (q.scaleType === 'emoji3') {
+          const good = qResponses.filter(r => (r.rating as any).value === 'good' || (r.rating as any).value === 'excellent').length;
+          return total > 0 ? Math.round((good / total) * 100) : 0;
+        }
+        // emoji5
+        const good = qResponses.filter(r => ['good', 'very_good', 'excellent'].includes((r.rating as any).value)).length;
+        return total > 0 ? Math.round((good / total) * 100) : 0;
+      })();
+      return { question: q, total, score };
     });
   }, [questions, responses]);
 
@@ -85,9 +121,12 @@ export default function AnalyticsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Levels</SelectItem>
-                  <SelectItem value="good">Good</SelectItem>
-                  <SelectItem value="regular">Regular</SelectItem>
                   <SelectItem value="bad">Bad</SelectItem>
+                  <SelectItem value="not_good">Not Good</SelectItem>
+                  <SelectItem value="good">Good</SelectItem>
+                  <SelectItem value="very_good">Very Good</SelectItem>
+                  <SelectItem value="excellent">Excellent</SelectItem>
+                  <SelectItem value="numeric">Numeric (0-10)</SelectItem>
                 </SelectContent>
               </Select>
             </div>

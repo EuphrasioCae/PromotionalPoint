@@ -10,7 +10,13 @@ export default function AdminDashboard() {
   const totalResponses = responses.length;
   const totalUsers = users.filter(u => u.role === 'user').length;
   
-  const goodResponses = responses.filter(r => r.rating === 'good').length;
+  const goodResponses = responses.filter((r) => {
+    const t: any = (r as any).rating?.type;
+    const v: any = (r as any).rating?.value;
+    if (t === 'numeric') return typeof v === 'number' && v >= 9;
+    if (t === 'emoji3') return v === 'good' || v === 'excellent';
+    return ['good', 'very_good', 'excellent'].includes(v);
+  }).length;
   const npsScore = totalResponses > 0 ? Math.round((goodResponses / totalResponses) * 100) : 0;
 
   const stats = [
@@ -90,11 +96,20 @@ export default function AdminDashboard() {
                 const question = questions.find(q => q.id === response.questionId);
                 return (
                   <div key={response.id} className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold ${
-                      response.rating === 'good' ? 'bg-green-500' :
-                      response.rating === 'regular' ? 'bg-yellow-500' : 'bg-red-500'
-                    }`}>
-                      {response.rating === 'good' ? '😊' : response.rating === 'regular' ? '😐' : '😞'}
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold ${(() => {
+                      const t: any = (response as any).rating?.type;
+                      const v: any = (response as any).rating?.value;
+                      if (t === 'numeric') return v >= 9 ? 'bg-green-500' : v >= 7 ? 'bg-yellow-500' : 'bg-red-500';
+                      if (t === 'emoji3') return v === 'good' || v === 'excellent' ? 'bg-green-500' : 'bg-red-500';
+                      return v === 'excellent' || v === 'very_good' || v === 'good' ? 'bg-green-500' : v === 'not_good' ? 'bg-yellow-500' : 'bg-red-500';
+                    })()}`}>
+                      {(() => {
+                        const t: any = (response as any).rating?.type;
+                        const v: any = (response as any).rating?.value;
+                        if (t === 'numeric') return String(v);
+                        if (t === 'emoji3') return v === 'good' || v === 'excellent' ? '😊' : '😞';
+                        return v === 'excellent' ? '🤩' : v === 'very_good' ? '😊' : v === 'good' ? '🙂' : v === 'not_good' ? '😐' : '😞';
+                      })()}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900">{response.userName}</p>
