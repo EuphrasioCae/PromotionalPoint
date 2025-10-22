@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNPS } from '@/contexts/NPSContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -13,13 +14,15 @@ import { Badge } from '@/components/ui/badge';
 
 export default function UsersPage() {
   const { users, addUser, updateUser, deleteUser } = useNPS();
+  const { user: authUser } = useAuth();
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     email: '',
     name: '',
-    role: 'user' as 'admin' | 'user'
+    role: 'user' as 'admin' | 'user',
+    origin: ''
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -32,7 +35,7 @@ export default function UsersPage() {
         description: 'The user has been updated successfully.',
       });
     } else {
-      addUser(formData);
+      addUser({ ...formData, company: authUser?.company || 'Acme Corp' });
       toast({
         title: 'User created',
         description: 'The user has been created successfully.',
@@ -41,7 +44,7 @@ export default function UsersPage() {
     
     setIsDialogOpen(false);
     setEditingUser(null);
-    setFormData({ email: '', name: '', role: 'user' });
+    setFormData({ email: '', name: '', role: 'user', origin: '' });
   };
 
   const handleEdit = (userId: string) => {
@@ -50,7 +53,8 @@ export default function UsersPage() {
       setFormData({
         email: user.email,
         name: user.name,
-        role: user.role
+        role: user.role,
+        origin: user.origin || ''
       });
       setEditingUser(userId);
       setIsDialogOpen(true);
@@ -76,7 +80,7 @@ export default function UsersPage() {
           <DialogTrigger asChild>
             <Button className="gap-2 shadow-lg" onClick={() => {
               setEditingUser(null);
-              setFormData({ email: '', name: '', role: 'user' });
+              setFormData({ email: '', name: '', role: 'user', origin: '' });
             }}>
               <Plus className="w-4 h-4" />
               Add User
@@ -106,6 +110,15 @@ export default function UsersPage() {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="origin">Origin</Label>
+                <Input
+                  id="origin"
+                  placeholder="cliente, parceiro, filial, etc."
+                  value={formData.origin}
+                  onChange={(e) => setFormData({ ...formData, origin: e.target.value })}
                 />
               </div>
               <div className="space-y-2">

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useNPS } from '@/contexts/NPSContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,17 +8,26 @@ import { FileDown, FileText } from 'lucide-react';
 export default function ReportsPage() {
   const { questions, responses, users } = useNPS();
   const { toast } = useToast();
+  const responsesWithDetails = useMemo(() => {
+    return responses.map(r => {
+      const question = questions.find(q => q.id === r.questionId);
+      const scale = (r.rating as any).type === 'numeric' ? 'numeric' : (r.rating as any).type;
+      const ratingValue = (r.rating as any).value;
+      return { r, question, scale, ratingValue };
+    });
+  }, [responses, questions]);
 
   const generateCSV = () => {
-    const headers = ['Response ID', 'Question ID', 'Question Text', 'User Name', 'Rating', 'Comment', 'Date'];
-    const rows = responses.map(r => {
-      const question = questions.find(q => q.id === r.questionId);
+    const headers = ['Response ID', 'Company', 'Question ID', 'Scale', 'Question Text', 'User Name', 'Rating', 'Comment', 'Date'];
+    const rows = responsesWithDetails.map(({ r, question, scale, ratingValue }) => {
       return [
         r.id,
+        r.company,
         question?.questionId || '',
+        scale,
         question?.text || '',
         r.userName,
-        r.rating,
+        String(ratingValue),
         r.comment || '',
         new Date(r.createdAt).toLocaleDateString()
       ];
@@ -55,9 +64,21 @@ export default function ReportsPage() {
     activeQuestions: questions.filter(q => q.isActive).length,
     totalResponses: responses.length,
     totalUsers: users.filter(u => u.role === 'user').length,
-    goodResponses: responses.filter(r => r.rating === 'good').length,
-    regularResponses: responses.filter(r => r.rating === 'regular').length,
-    badResponses: responses.filter(r => r.rating === 'bad').length
+    goodResponses: responses.filter((r: any) => {
+      const t = r.rating?.type; const v = r.rating?.value;
+      if (t === 'numeric') return v >= 9; if (t === 'emoji3') return v === 'good' || v === 'excellent';
+      return ['good','very_good','excellent'].includes(v);
+    }).length,
+    regularResponses: responses.filter((r: any) => {
+      const t = r.rating?.type; const v = r.rating?.value;
+      if (t === 'numeric') return v >= 7 && v <= 8; if (t === 'emoji5') return v === 'not_good';
+      return false;
+    }).length,
+    badResponses: responses.filter((r: any) => {
+      const t = r.rating?.type; const v = r.rating?.value;
+      if (t === 'numeric') return v <= 6; if (t === 'emoji3') return v === 'bad'; if (t === 'emoji5') return v === 'bad';
+      return false;
+    }).length
   };
 
   return (
@@ -172,19 +193,23 @@ export default function ReportsPage() {
                 </tr>
               </thead>
               <tbody>
-                {responses.slice(-10).reverse().map((response) => {
+                {responses.slice(-10).reverse().map((response: any) => {
                   const question = questions.find(q => q.id === response.questionId);
                   return (
                     <tr key={response.id} className="border-b hover:bg-gray-50">
                       <td className="py-3 px-4 text-sm text-gray-900">{question?.questionId}</td>
                       <td className="py-3 px-4 text-sm text-gray-900">{response.userName}</td>
                       <td className="py-3 px-4">
-                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                          response.rating === 'good' ? 'bg-green-100 text-green-700' :
-                          response.rating === 'regular' ? 'bg-yellow-100 text-yellow-700' :
-                          'bg-red-100 text-red-700'
-                        }`}>
-                          {response.rating}
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${(() => {
+                          const t = response.rating?.type; const v = response.rating?.value;
+                          if (t === 'numeric') return v >= 9 ? 'bg-green-100 text-green-700' : v >=7 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700';
+                          if (t === 'emoji3') return v === 'good' || v === 'excellent' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
+                          return v === 'excellent' || v === 'very_good' || v === 'good' ? 'bg-green-100 text-green-700' : v === 'not_good' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700';
+                        })()}`}>
+                          {(() => {
+                            const t = response.rating?.type; const v = response.rating?.value;
+                            return t === 'numeric' ? String(v) : v;
+                          })()}
                         </span>
                       </td>
                       <td className="py-3 px-4 text-sm text-gray-500">

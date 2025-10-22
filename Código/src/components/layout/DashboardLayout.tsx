@@ -24,7 +24,7 @@ export default function DashboardLayout({ children, navigation }: LayoutProps) {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900">NPS Platform</h1>
-                <p className="text-xs text-gray-500">{user?.role === 'admin' ? 'Admin Dashboard' : 'User Dashboard'}</p>
+                <p className="text-xs text-gray-500">{user?.role === 'admin' ? 'Admin Dashboard' : 'Evaluations'}</p>
               </div>
             </div>
             
@@ -44,29 +44,33 @@ export default function DashboardLayout({ children, navigation }: LayoutProps) {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* Desktop Navigation */}
-          <aside className="hidden lg:block w-64 flex-shrink-0">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sticky top-24">
-              {navigation}
-            </div>
-          </aside>
+          {/* Desktop Navigation (hidden for user role) */}
+          {user?.role === 'admin' && (
+            <aside className="hidden lg:block w-64 flex-shrink-0">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sticky top-24">
+                {navigation}
+              </div>
+            </aside>
+          )}
 
-          {/* Mobile Navigation */}
-          <div className="lg:hidden">
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Menu className="w-4 h-4" />
-                  Menu
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-64">
-                <div className="mt-8">
-                  {navigation}
-                </div>
-              </SheetContent>
-            </Sheet>
-          </div>
+          {/* Mobile Navigation (hidden for user role) */}
+          {user?.role === 'admin' && (
+            <div className="lg:hidden">
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Menu className="w-4 h-4" />
+                    Menu
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-64">
+                  <div className="mt-8">
+                    {navigation}
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
+          )}
 
           {/* Main Content */}
           <main className="flex-1 min-w-0">

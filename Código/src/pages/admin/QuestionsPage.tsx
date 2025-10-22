@@ -10,6 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/components/ui/use-toast';
 import { Plus, Edit, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import type { ScaleType } from '@/types/nps';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 export default function QuestionsPage() {
@@ -20,7 +22,10 @@ export default function QuestionsPage() {
   const [editingQuestion, setEditingQuestion] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     questionId: '',
-    text: ''
+    text: '',
+    scaleType: 'emoji5' as ScaleType,
+    assignedTo: 'all' as 'all' | 'selected',
+    assignedUserIds: [] as string[]
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -36,7 +41,8 @@ export default function QuestionsPage() {
       addQuestion({
         ...formData,
         createdBy: user?.name || 'Admin',
-        isActive: true
+        isActive: true,
+        company: user?.company || 'Acme Corp'
       });
       toast({
         title: 'Question created',
@@ -46,7 +52,7 @@ export default function QuestionsPage() {
     
     setIsDialogOpen(false);
     setEditingQuestion(null);
-    setFormData({ questionId: '', text: '' });
+    setFormData({ questionId: '', text: '', scaleType: 'emoji5', assignedTo: 'all', assignedUserIds: [] });
   };
 
   const handleEdit = (questionId: string) => {
@@ -54,7 +60,10 @@ export default function QuestionsPage() {
     if (question) {
       setFormData({
         questionId: question.questionId,
-        text: question.text
+        text: question.text,
+        scaleType: question.scaleType,
+        assignedTo: question.assignedTo,
+        assignedUserIds: question.assignedUserIds || []
       });
       setEditingQuestion(questionId);
       setIsDialogOpen(true);
@@ -88,7 +97,7 @@ export default function QuestionsPage() {
           <DialogTrigger asChild>
             <Button className="gap-2 shadow-lg" onClick={() => {
               setEditingQuestion(null);
-              setFormData({ questionId: '', text: '' });
+              setFormData({ questionId: '', text: '', scaleType: 'emoji5', assignedTo: 'all', assignedUserIds: [] });
             }}>
               <Plus className="w-4 h-4" />
               Add Question
@@ -120,6 +129,41 @@ export default function QuestionsPage() {
                   rows={4}
                 />
               </div>
+              <div className="space-y-2">
+                <Label>Scale Type</Label>
+                <Select value={formData.scaleType} onValueChange={(value: ScaleType) => setFormData({ ...formData, scaleType: value })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="emoji5">5 Emojis: BAD → EXCELLENT</SelectItem>
+                    <SelectItem value="emoji3">3 Emojis: BAD → EXCELLENT</SelectItem>
+                    <SelectItem value="numeric">Numeric: 0 to 10</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Assign To</Label>
+                <Select value={formData.assignedTo} onValueChange={(value: 'all' | 'selected') => setFormData({ ...formData, assignedTo: value })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All users in company</SelectItem>
+                    <SelectItem value="selected">Selected users only</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {formData.assignedTo === 'selected' && (
+                <div className="space-y-2">
+                  <Label>Assigned User IDs (comma-separated)</Label>
+                  <Input
+                    placeholder="e.g. 2,5,8"
+                    value={formData.assignedUserIds.join(',')}
+                    onChange={(e) => setFormData({ ...formData, assignedUserIds: e.target.value.split(',').map(v => v.trim()).filter(Boolean) })}
+                  />
+                </div>
+              )}
               <div className="flex justify-end space-x-2">
                 <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Cancel
@@ -147,6 +191,9 @@ export default function QuestionsPage() {
                       question.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
                     }`}>
                       {question.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                    <span className="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-semibold rounded-full">
+                      {question.scaleType === 'emoji5' ? '5 Emojis' : question.scaleType === 'emoji3' ? '3 Emojis' : '0-10'}
                     </span>
                   </div>
                   <CardTitle className="text-lg">{question.text}</CardTitle>

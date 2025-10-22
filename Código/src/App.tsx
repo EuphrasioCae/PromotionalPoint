@@ -15,7 +15,6 @@ import AnalyticsPage from "./pages/admin/AnalyticsPage";
 import ReportsPage from "./pages/admin/ReportsPage";
 
 // User Pages
-import UserDashboard from "./pages/user/UserDashboard";
 import EvaluationsPage from "./pages/user/EvaluationsPage";
 
 function ProtectedRoute({ children, requireAdmin = false }: { children: React.ReactNode; requireAdmin?: boolean }) {
@@ -48,8 +47,8 @@ function AppRoutes() {
     <DashboardLayout navigation={<Navigation isAdmin={isAdmin} />}>
       <Routes>
         {/* Redirect root based on role */}
-        <Route path="/" element={<Navigate to={isAdmin ? "/admin" : "/user"} replace />} />
-        <Route path="/login" element={<Navigate to={isAdmin ? "/admin" : "/user"} replace />} />
+        <Route path="/" element={<Navigate to={isAdmin ? "/admin" : "/user/evaluations"} replace />} />
+        <Route path="/login" element={<Navigate to={isAdmin ? "/admin" : "/user/evaluations"} replace />} />
 
         {/* Admin Routes */}
         <Route
@@ -94,14 +93,7 @@ function AppRoutes() {
         />
 
         {/* User Routes */}
-        <Route
-          path="/user"
-          element={
-            <ProtectedRoute>
-              <UserDashboard />
-            </ProtectedRoute>
-          }
-        />
+        
         <Route
           path="/user/evaluations"
           element={
@@ -112,7 +104,7 @@ function AppRoutes() {
         />
 
         {/* Catch all */}
-        <Route path="*" element={<Navigate to={isAdmin ? "/admin" : "/user"} replace />} />
+        <Route path="*" element={<Navigate to={isAdmin ? "/admin" : "/user/evaluations"} replace />} />
       </Routes>
     </DashboardLayout>
   );

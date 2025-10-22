@@ -7,6 +7,7 @@ export interface User {
   email: string;
   name: string;
   role: UserRole;
+  company: string;
 }
 
 interface AuthContextType {
@@ -39,7 +40,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         id: '1',
         email: 'admin@example.com',
         name: 'Admin User',
-        role: 'admin'
+        role: 'admin',
+        company: 'Acme Corp'
       };
       setUser(adminUser);
       localStorage.setItem('nps_user', JSON.stringify(adminUser));
@@ -48,7 +50,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         id: '2',
         email: 'user@example.com',
         name: 'User',
-        role: 'user'
+        role: 'user',
+        company: 'Acme Corp'
       };
       setUser(regularUser);
       localStorage.setItem('nps_user', JSON.stringify(regularUser));

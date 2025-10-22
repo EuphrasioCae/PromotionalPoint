@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { NPSQuestion, NPSResponse, NPSUser } from '@/types/nps';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import { NPSQuestion, NPSResponse, NPSUser, Rating } from '@/types/nps';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface NPSContextType {
   questions: NPSQuestion[];
@@ -24,7 +25,10 @@ const initialQuestions: NPSQuestion[] = [
     text: 'How satisfied are you with our customer service?',
     createdAt: new Date('2024-01-15'),
     createdBy: 'Admin User',
-    isActive: true
+    isActive: true,
+    scaleType: 'emoji3',
+    company: 'Acme Corp',
+    assignedTo: 'all'
   },
   {
     id: '2',
@@ -32,7 +36,10 @@ const initialQuestions: NPSQuestion[] = [
     text: 'How would you rate the quality of our product?',
     createdAt: new Date('2024-01-20'),
     createdBy: 'Admin User',
-    isActive: true
+    isActive: true,
+    scaleType: 'emoji5',
+    company: 'Acme Corp',
+    assignedTo: 'all'
   }
 ];
 
@@ -42,25 +49,28 @@ const initialResponses: NPSResponse[] = [
     questionId: '1',
     userId: '2',
     userName: 'Regular User',
-    rating: 'good',
+    rating: { type: 'emoji3', value: 'good' },
     comment: 'Excellent service!',
-    createdAt: new Date('2024-01-16')
+    createdAt: new Date('2024-01-16'),
+    company: 'Acme Corp'
   },
   {
     id: '2',
     questionId: '1',
     userId: '3',
     userName: 'John Doe',
-    rating: 'regular',
-    createdAt: new Date('2024-01-17')
+    rating: { type: 'emoji3', value: 'bad' },
+    createdAt: new Date('2024-01-17'),
+    company: 'Acme Corp'
   },
   {
     id: '3',
     questionId: '2',
     userId: '2',
     userName: 'Regular User',
-    rating: 'good',
-    createdAt: new Date('2024-01-21')
+    rating: { type: 'emoji5', value: 'very_good' },
+    createdAt: new Date('2024-01-21'),
+    company: 'Acme Corp'
   }
 ];
 
@@ -70,6 +80,7 @@ const initialUsers: NPSUser[] = [
     email: 'admin@example.com',
     name: 'Admin User',
     role: 'admin',
+    company: 'Acme Corp',
     createdAt: new Date('2024-01-01')
   },
   {
@@ -77,6 +88,8 @@ const initialUsers: NPSUser[] = [
     email: 'user@example.com',
     name: 'Regular User',
     role: 'user',
+    company: 'Acme Corp',
+    origin: 'cliente',
     createdAt: new Date('2024-01-05')
   }
 ];
@@ -85,6 +98,7 @@ export const NPSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [questions, setQuestions] = useState<NPSQuestion[]>([]);
   const [responses, setResponses] = useState<NPSResponse[]>([]);
   const [users, setUsers] = useState<NPSUser[]>([]);
+  const { user: authUser } = useAuth();
 
   useEffect(() => {
     // Load from localStorage or use initial data
@@ -130,7 +144,8 @@ export const NPSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const newResponse: NPSResponse = {
       ...response,
       id: Date.now().toString(),
-      createdAt: new Date()
+      createdAt: new Date(),
+      company: authUser?.company || 'Acme Corp'
     };
     setResponses([...responses, newResponse]);
   };
@@ -139,7 +154,8 @@ export const NPSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const newUser: NPSUser = {
       ...user,
       id: Date.now().toString(),
-      createdAt: new Date()
+      createdAt: new Date(),
+      company: authUser?.company || 'Acme Corp'
     };
     setUsers([...users, newUser]);
   };
@@ -152,11 +168,28 @@ export const NPSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setUsers(users.filter(u => u.id !== id));
   };
 
+  // Company-level filtering
+  const company = authUser?.company;
+  const companyQuestions = useMemo(() => {
+    if (!company) return questions;
+    return questions.filter(q => q.company === company);
+  }, [questions, company]);
+
+  const companyResponses = useMemo(() => {
+    if (!company) return responses;
+    return responses.filter(r => r.company === company);
+  }, [responses, company]);
+
+  const companyUsers = useMemo(() => {
+    if (!company) return users;
+    return users.filter(u => u.company === company);
+  }, [users, company]);
+
   return (
     <NPSContext.Provider value={{
-      questions,
-      responses,
-      users,
+      questions: companyQuestions,
+      responses: companyResponses,
+      users: companyUsers,
       addQuestion,
       updateQuestion,
       deleteQuestion,
